@@ -60,7 +60,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private ImageView mCustomerProfileImage;
 
-    private TextView mCustomerName,mCustomerPhone;
+    private TextView mCustomerName,mCustomerPhone,mCustomerDestination;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +81,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         mCustomerName=(TextView)findViewById(R.id.customerName);
         mCustomerPhone=(TextView)findViewById(R.id.customerPhone);
+        mCustomerDestination=(TextView)findViewById(R.id.customerDestination);
 
         mLogout=(Button)findViewById(R.id.logout);
 
@@ -104,13 +105,14 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     public void getAssignedCustomer(){
         String driverId=FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference assignedCustomerRef=FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRideId");
+        DatabaseReference assignedCustomerRef=FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("CustomerRequest").child("customerRideId");
         assignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()){
                     customerId=dataSnapshot.getValue().toString();
                     getAssignedCustomerPickupLocation();
+                    getAssignedCustomerDestination();
                     getAssignedCustomerInfo();
                 }
                 else{
@@ -118,18 +120,76 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                     if (pickupMarker!=null){
                         pickupMarker.remove();
                     }
+                    if (destinationMarker!=null){
+                        destinationMarker.remove();
+                    }
                     if (assignedCustomerPickupLocationRef!=null){
                         assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationListener);
+                    }
+                    if (assignedCustomerDestinationLocationRef!=null){
+                        assignedCustomerDestinationLocationRef.removeEventListener(assignedCustomerDestinationLocationListener);
                     }
                     mCustomerInfo.setVisibility(View.GONE);
                     mCustomerName.setText("");
                     mCustomerPhone.setText("");
+                    mCustomerDestination.setText("Destination: --");
                     mCustomerProfileImage.setImageResource(R.mipmap.ic_defult_user);
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+    }
+
+
+    Marker destinationMarker;
+    private DatabaseReference assignedCustomerDestinationLocationRef;
+    private ValueEventListener assignedCustomerDestinationLocationListener;
+    public void getAssignedCustomerDestination(){
+        String driverId=FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference assignedCustomerRef=FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("CustomerRequest").child("destination");
+        assignedCustomerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()){
+                    String destination=dataSnapshot.getValue().toString();
+                    mCustomerDestination.setText("Destination: "+destination);
+                }
+                else{
+                    mCustomerDestination.setText("Destination: --");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+
+
+        assignedCustomerDestinationLocationRef=FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("CustomerRequest").child("DestinationLatlng").child("location").child("l");
+        assignedCustomerDestinationLocationListener=assignedCustomerDestinationLocationRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()&&!customerId.equals("")){
+                    List<Object> map=(List<Object>) dataSnapshot.getValue();
+                    double locationLat=0;
+                    double locationLng=0;
+                    if (map.get(0)!=null){
+                        locationLat=Double.parseDouble(map.get(0).toString());
+                    }
+                    if (map.get(1)!=null){
+                        locationLng=Double.parseDouble(map.get(1).toString());
+                    }
+                    LatLng customerLatLng=new LatLng(locationLat,locationLng);
+                    destinationMarker=mMap.addMarker(new MarkerOptions().position(customerLatLng).title("Customer Destination"));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
             }
         });
     }
@@ -161,7 +221,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         });
     }
 
-    private Marker pickupMarker;
+    Marker pickupMarker;
     private DatabaseReference assignedCustomerPickupLocationRef;
     private ValueEventListener assignedCustomerPickupLocationListener;
     public void getAssignedCustomerPickupLocation(){
@@ -177,10 +237,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                         locationLat=Double.parseDouble(map.get(0).toString());
                     }
                     if (map.get(1)!=null){
-                        locationLat=Double.parseDouble(map.get(1).toString());
+                        locationLng=Double.parseDouble(map.get(1).toString());
                     }
-                    LatLng customerLatLng=new LatLng(locationLat,locationLng);
-                    pickupMarker=mMap.addMarker(new MarkerOptions().position(customerLatLng).title("Customer").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
+                    LatLng pickupLatLng=new LatLng(locationLat,locationLng);
+                    pickupMarker=mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("Customer").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
                 }
             }
 
@@ -207,7 +267,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mMap = googleMap;
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
+            ActivityCompat.requestPermissions(DriverMapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
         }
         buildGoogleApiClient();
         mMap.setMyLocationEnabled(true);
@@ -260,8 +320,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            return;
+            ActivityCompat.requestPermissions(DriverMapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
     }
