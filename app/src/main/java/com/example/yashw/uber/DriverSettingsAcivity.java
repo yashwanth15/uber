@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CustomerSettingsActivity extends AppCompatActivity {
+public class DriverSettingsAcivity extends AppCompatActivity {
 
     private Button mConfirm,mBack;
     private EditText mName,mPhone;
@@ -41,14 +41,13 @@ public class CustomerSettingsActivity extends AppCompatActivity {
 
     private FirebaseAuth firebaseAuth;
 
-    private DatabaseReference mCustomerDatabase;
+    private DatabaseReference mDriverDatabase;
 
     private String mUserId,mname,mphone,mprofileImageUrl;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_customer_settings);
+        setContentView(R.layout.activity_driver_settings_acivity);
 
         mProfileImage=(ImageView) findViewById(R.id.profileImage);
 
@@ -61,7 +60,7 @@ public class CustomerSettingsActivity extends AppCompatActivity {
         firebaseAuth=FirebaseAuth.getInstance();
         mUserId=firebaseAuth.getCurrentUser().getUid();
 
-        mCustomerDatabase= FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(mUserId);
+        mDriverDatabase= FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(mUserId);
 
         getUserInfo();
 
@@ -88,13 +87,10 @@ public class CustomerSettingsActivity extends AppCompatActivity {
                 return;
             }
         });
-
     }
 
-
-
     private void getUserInfo(){
-        mCustomerDatabase.addValueEventListener(new ValueEventListener() {
+        mDriverDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()&&dataSnapshot.getChildrenCount()>0){
@@ -121,7 +117,6 @@ public class CustomerSettingsActivity extends AppCompatActivity {
         });
     }
 
-
     private void saveUserInformation(){
 
         mname=mName.getText().toString();
@@ -131,7 +126,7 @@ public class CustomerSettingsActivity extends AppCompatActivity {
         userInfo.put("name",mname);
         userInfo.put("phone",mphone);
 
-        mCustomerDatabase.updateChildren(userInfo);
+        mDriverDatabase.updateChildren(userInfo);
 
         if (resultUri!=null){
             StorageReference filePath = FirebaseStorage.getInstance().getReference().child("profile_images").child(mUserId);
@@ -163,7 +158,7 @@ public class CustomerSettingsActivity extends AppCompatActivity {
 
                     Map imageMap=new HashMap();
                     imageMap.put("profileImageUrl",downloadUrl.toString());
-                    mCustomerDatabase.updateChildren(imageMap);
+                    mDriverDatabase.updateChildren(imageMap);
 
                     finish();
                     return;
