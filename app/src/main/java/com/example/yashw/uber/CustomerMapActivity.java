@@ -55,10 +55,14 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     LocationRequest mLocationRequest;
-    private Button mLogout,mRequest,mSettings;
+
+    private Button mLogout, mRequest, mSettings, mHistory;
+
     private Boolean requestBol=false;
+
     private Marker pickupMarker, destinationMarker;
-    LatLng pickupLocation,latlngDestination;
+
+    LatLng pickupLocation, latlngDestination;
 
     private String destination;
 
@@ -86,6 +90,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
         mLogout=(Button)findViewById(R.id.logout);
         mRequest=(Button) findViewById(R.id.request);
         mSettings=(Button)findViewById(R.id.settings);
+        mHistory=(Button)findViewById(R.id.history);
 
         mDriverInfo=(LinearLayout)findViewById(R.id.driverInfo);
 
@@ -124,6 +129,15 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                     getCloseDriver();
                 }
 
+            }
+        });
+
+        mHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(CustomerMapActivity.this,HistoryActivity.class);
+                startActivity(intent);
+                return;
             }
         });
 
@@ -354,7 +368,10 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
         mRequest.setText("Call Uber");
 
         mDriverInfo.setVisibility(View.GONE);
-        destinationMarker.remove();
+        if (destinationMarker!=null){
+            destinationMarker.remove();
+        }
+
 
         latlngDestination=null;
     }
