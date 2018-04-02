@@ -317,7 +317,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
 
     private void endRide(){
-        mRideStatus.setText("Picker Customer");
+        mRideStatus.setText("Picker Customer Car");
         erasePolyLines();
         String user_id=FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference driverRef=FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(user_id).child("CustomerRequest");

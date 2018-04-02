@@ -204,7 +204,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                         geoFire.setLocation("location",new GeoLocation(latlngDestination.latitude,latlngDestination.longitude));
                     }
 
-                    mRequest.setText("getting driver location");
+                    mRequest.setText("getting tow truck location");
                     getDriverLocation();
                     getAssignedDriverInfo();
                     getHasRideEnded();
@@ -248,7 +248,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                     List<Object> map=(List<Object>) dataSnapshot.getValue();
                     double locationLat=0;
                     double locationLng=0;
-                    mRequest.setText("Driver found");
+                    mRequest.setText("Tow Truck found");
 
                     if (map.get(0)!=null){
                         locationLat=Double.parseDouble(map.get(0).toString());
@@ -272,10 +272,10 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
                     float distance=loc2.distanceTo(loc1);
 
                     if (distance<100){
-                        mRequest.setText("Driver Arrived");
+                        mRequest.setText("Tow Truck Arrived");
                     }
                     else{
-                        mRequest.setText("Driver Found: "+String.valueOf(distance));
+                        mRequest.setText("Tow Truck Found: "+String.valueOf(distance));
                     }
 
                     mDriverMarker=mMap.addMarker(new MarkerOptions().position(driverLatLng).title("Your driver").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_car)));
@@ -365,7 +365,7 @@ public class CustomerMapActivity  extends FragmentActivity implements OnMapReady
 
         GeoFire geoFire=new GeoFire(ref);
         geoFire.removeLocation(user_id);
-        mRequest.setText("Call Uber");
+        mRequest.setText("Call Tow Truck");
 
         mDriverInfo.setVisibility(View.GONE);
         if (destinationMarker!=null){
